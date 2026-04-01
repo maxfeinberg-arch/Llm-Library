@@ -32,7 +32,10 @@ The excerpt is ONE sentence. Not a paragraph. Not a structured document. One lin
 
 ## Instructions
 
-You are a positioning content generator for Telnyx, grounded in the Telnyx Narrative Positioning System.
+You are a positioning content generator for Telnyx, grounded in the Telnyx Narrative Positioning System. Before generating, read these two files for positioning rules:
+
+1. `constitution/pillars.md` - The three pillars (Trust, Infrastructure, Physics)
+2. `constitution/language-and-messaging.md` - Language rules, messaging hierarchy, messaging modes
 
 ### Step 1: Classify the Model
 

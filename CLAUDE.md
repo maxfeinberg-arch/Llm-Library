@@ -1,11 +1,13 @@
 # LLM-Library
 
-This repo contains Claude Code skills for generating Telnyx Voice AI Infrastructure positioning content. All content is grounded in the positioning constitution at `01-positioning-constitution.md`.
+This repo contains Claude Code skills for generating Telnyx Voice AI Infrastructure positioning content. All content is grounded in the positioning constitution, split into focused files under `constitution/`.
 
 ## Skills
 
 ### `/excerpt <model name>`
-Generates a single-sentence positioning excerpt for an AI model page on telnyx.com. The excerpt sits directly below the model name (H1). One sentence, max 30 words. No headers, no metadata, no structured output.
+Generates a single-sentence positioning excerpt for an AI model page on telnyx.com. The excerpt sits directly below the model name (H1). One sentence, max 30 words. Informational intent, not transactional. No headers, no metadata, no structured output.
+
+**Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`
 
 ### `/faq <keyword>`
 Generates 7-8 SEO-optimized FAQ sections using live Google PAA data from the DataForSEO API. Outputs publication-ready Q&A pairs with inline links to vetted sources.
@@ -15,28 +17,42 @@ Generates 7-8 SEO-optimized FAQ sections using live Google PAA data from the Dat
 - All URLs come from DataForSEO API results. Never fabricate or guess a URL.
 - Requires DataForSEO credentials: `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` env vars, or provide credentials directly when prompted.
 
+**Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`, `constitution/arguments.md`, `constitution/proof-layer.md`
+
 ## Positioning Constitution
 
-`01-positioning-constitution.md` is the single source of truth for all content. Key rules:
+The constitution is split into focused files so skills only ingest what they need. Each file is verbatim from the source document. Do not summarize, paraphrase, or hallucinate positioning claims.
 
-- **Three Pillars:** Trust, Infrastructure, Physics. Every claim maps to one.
-- **Narrative Flow:** Trust > Infrastructure > Physics. Trust is the reason. Infrastructure is the strategy. Physics is the proof.
-- **Messaging Hierarchy:** Category > Core value > Platform proof > Product proof.
-- **Banned words:** leverage, unlock, empower, best-in-class, cutting-edge, game-changing, synergy, holistic
-- **No em dashes.**
-- **Always lead with:** Voice AI Infrastructure, AI communications infrastructure, AI agents interacting with humans, Trust infrastructure for voice AI
-- **Never lead with:** CPaaS, Telecom APIs, Developer communications tools
-- **Voice:** Infrastructure company voice. We build things, we own things, we run things. Technical precision over marketing polish.
-- **Numbers discipline:** Every statistic must have a verifiable source or be marked [INTERNAL ESTIMATE] or [BENCHMARK PENDING].
+| File | Contents | Used by |
+|------|----------|---------|
+| `constitution/pillars.md` | Three Pillars: Trust, Infrastructure, Physics | excerpt, faq |
+| `constitution/language-and-messaging.md` | Language rules, messaging hierarchy, two messaging modes | excerpt, faq |
+| `constitution/arguments.md` | Five canonical arguments with evidence and rebuttals | faq |
+| `constitution/proof-layer.md` | Proof points table (claims only Telnyx can make) | faq |
+| `constitution/frankenstack.md` | The Frankenstack problem definition | reference |
+| `constitution/narrative.md` | Category definition and core narrative | reference |
+| `constitution/personas.md` | Persona table and 30-second sales scripts | reference |
+| `constitution/competitive.md` | Competitive intelligence (ElevenLabs, Twilio, LiveKit, Vapi, Retell, Bland, Cloudflare) | reference |
+| `constitution/strategy.md` | Journey maps, SEO/AEO strategy, content priorities, regional execution | reference |
 
-All references to the constitution in skill outputs must be verbatim. No summarizing, paraphrasing, or hallucinating positioning claims.
+**"reference"** means the file is not read by any skill automatically but is available for manual consultation.
 
 ## File Structure
 
 ```
-CLAUDE.md                          # This file
-01-positioning-constitution.md     # Positioning source of truth
+CLAUDE.md                                # This file
+01-positioning-constitution.md           # Full constitution (archive/reference)
+constitution/
+  pillars.md                             # Three Pillars
+  language-and-messaging.md              # Language rules, hierarchy, modes
+  arguments.md                           # Five canonical arguments
+  proof-layer.md                         # Proof points table
+  frankenstack.md                        # The Frankenstack problem
+  narrative.md                           # Category & core narrative
+  personas.md                            # Personas & sales scripts
+  competitive.md                         # Competitive intelligence
+  strategy.md                            # Journeys, SEO, content, regional
 skills/
-  excerpt/SKILL.md                 # Excerpt generator skill
-  faq/SKILL.md                    # FAQ generator skill
+  excerpt/SKILL.md                       # Excerpt generator skill
+  faq/SKILL.md                           # FAQ generator skill
 ```
