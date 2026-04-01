@@ -2,7 +2,6 @@
 name: faq
 description: Generate SEO-optimized FAQ sections for a given keyword using DataForSEO PAA data, vetted external sources, and Telnyx positioning. Use when the user wants to create FAQ content grounded in real search data and high-authority sources.
 argument-hint: "Target keyword, e.g. voice AI infrastructure, AI call center, STIR/SHAKEN"
-effort: high
 ---
 
 # FAQ Generator
@@ -137,7 +136,7 @@ Every FAQ answer must align with the Telnyx Narrative Positioning System. This d
 **Language rules (apply to ALL answers):**
 - NEVER use: leverage, unlock, empower, best-in-class, cutting-edge, game-changing, synergy, holistic
 - NEVER use em dashes
-- Voice: Infrastructure company voice. Technical precision over marketing polish.
+- Voice: Infrastructure company voice. We build things, we own things, we run things. Technical precision over marketing polish.
 - Every statistic must have a verifiable source or be marked [INTERNAL ESTIMATE] or [BENCHMARK PENDING]
 
 ---
