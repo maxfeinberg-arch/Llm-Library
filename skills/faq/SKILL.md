@@ -52,7 +52,7 @@ Collect 10-15 PAA questions. You will select 7-8 of the strongest for the final 
 
 ---
 
-## Step 2: Pull Organic SERP Results for Source Vetting
+## Step 2: Pull Organic SERP Results for External Sources
 
 From the same API response, also extract items where `type` is `"organic"`. Collect the top 20 organic results with their:
 - `domain`
@@ -60,7 +60,53 @@ From the same API response, also extract items where `type` is `"organic"`. Coll
 - `title`
 - `rank_group`
 
-These organic results serve as your pool of vetted external sources to link to in FAQ answers.
+These organic results serve as your pool of vetted external sources to link to in FAQ answers. You may ONLY link to external URLs that appear in these results. Do not fabricate or guess URLs.
+
+---
+
+## Step 2b: Discover Real Telnyx Pages
+
+Run a second DataForSEO SERP call to find actual Telnyx pages related to the keyword.
+
+**API Call:**
+```
+POST https://api.dataforseo.com/v3/serp/google/organic/live/advanced
+```
+
+**Request body:**
+```json
+[
+  {
+    "keyword": "site:telnyx.com $ARGUMENTS",
+    "location_code": 2840,
+    "language_code": "en",
+    "device": "desktop",
+    "os": "windows",
+    "depth": 30
+  }
+]
+```
+
+From the response, extract all organic results. These are real, indexed Telnyx pages. Collect their:
+- `url` (the actual page URL)
+- `title` (page title)
+- `description` (page description)
+
+This is your Telnyx link pool. You may ONLY link to Telnyx URLs that appear in these results. Do not fabricate or guess Telnyx URLs. If no relevant Telnyx pages are found for a given FAQ, do not force a Telnyx link. Reclassify that FAQ as external-linked instead.
+
+If the `site:telnyx.com` query returns zero results, run a broader fallback query:
+```json
+[
+  {
+    "keyword": "site:telnyx.com voice AI",
+    "location_code": 2840,
+    "language_code": "en",
+    "device": "desktop",
+    "os": "windows",
+    "depth": 30
+  }
+]
+```
 
 ---
 
@@ -124,12 +170,12 @@ Every FAQ answer must align with the Telnyx Narrative Positioning System. This d
 **For Telnyx-linked FAQs:**
 - Map the answer to one of the three pillars: Trust, Infrastructure, or Physics
 - Use the Bottom-Up messaging mode: Problem > Solution > Architecture > Category
-- Link to a specific, relevant Telnyx page (product page, docs, blog post) - not the homepage
+- Link ONLY to a Telnyx URL discovered in Step 2b. Never guess or fabricate a Telnyx URL. Never link to telnyx.com homepage.
 - The Telnyx reference must feel like a natural part of the answer, not an advertisement
 
 **For External-linked FAQs:**
 - Answer the question factually and completely
-- Link to the vetted high-DA source that provides the best depth on the topic
+- Link ONLY to URLs discovered in Step 2 organic results or PAA expanded elements. Never guess or fabricate an external URL.
 - If the topic tangentially relates to voice AI infrastructure, frame the answer through that lens without forcing it
 - These answers build topical authority and trust - they show the content is informative, not just promotional
 
@@ -161,7 +207,7 @@ Every FAQ answer must align with the Telnyx Narrative Positioning System. This d
 
    GOOD: "STIR/SHAKEN is a caller ID authentication framework [mandated by the FCC in 2021](https://www.fcc.gov/stir-shaken) to combat robocall spoofing."
 
-2. **No generic Telnyx links.** Every Telnyx link must point to a specific, relevant page - a product page, a doc, a specific blog post. Never link to telnyx.com homepage.
+2. **No fabricated links.** Every URL (Telnyx or external) must come from the DataForSEO API results. Telnyx URLs come from Step 2b. External URLs come from Step 2 organic results or PAA expanded elements. Never guess, fabricate, or construct a URL. Never link to telnyx.com homepage.
 
 3. **Answers must stand alone.** Each answer should fully satisfy the searcher's intent without requiring them to click through. The link adds depth, not the core answer.
 
@@ -224,4 +270,5 @@ Produce the final output in this structure:
 - Every Telnyx-linked answer must map to a positioning pillar
 - Maximum 4 sentences per answer
 - All PAA data must come from the DataForSEO API call, not from fabricated questions
+- All URLs (Telnyx and external) must come from DataForSEO API results. Zero fabricated links.
 - If the DataForSEO API returns fewer than 7 usable PAA questions, supplement with related questions from the `related_searches` SERP item type, clearly marked as "[Related Search]" in the metadata
