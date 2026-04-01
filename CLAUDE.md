@@ -2,22 +2,34 @@
 
 This repo contains Claude Code skills for generating Telnyx Voice AI Infrastructure positioning content. All content is grounded in the positioning constitution, split into focused files under `constitution/`.
 
+## How Skills Work: Pipeline, Not Agentic
+
+Both skills run as **sequential pipelines with human-in-the-loop checkpoints**. At each checkpoint, the user is presented with 4 options (via `AskUserQuestion` with preview fields) and can select one or choose "Other" to request regeneration with feedback. The skill does NOT proceed to the next step until the user makes a selection.
+
+Steps within a stage run in parallel when they are independent (e.g., multiple API calls). Steps across stages run sequentially because each depends on the user's choice from the previous checkpoint.
+
 ## Skills
 
 ### `/excerpt <model name>`
-Generates a single-sentence positioning excerpt for an AI model page on telnyx.com. The excerpt sits directly below the model name (H1). One sentence, max 30 words. Informational intent, not transactional. No headers, no metadata, no structured output.
+Generates a single-sentence positioning excerpt for an AI model page on telnyx.com. Informational intent, not transactional. One sentence, max 30 words.
+
+**Pipeline (2 checkpoints):**
+1. **Research & Classify** (parallel: read constitution files + web search model) → **Checkpoint 1:** User picks from 4 positioning angles (pillar + framing direction), with previews
+2. **Generate Excerpts** → **Checkpoint 2:** User picks from 4 excerpt sentences, with previews. Regen available.
 
 **Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`
 
 ### `/faq <keyword>`
-Generates 7-8 SEO-optimized FAQ sections using live Google PAA data from the DataForSEO API. Outputs publication-ready Q&A pairs with inline links to vetted sources.
+Generates 7-8 SEO-optimized FAQ sections using live Google PAA data from the DataForSEO API.
 
-- 2-3 FAQs link to real Telnyx pages (discovered via `site:telnyx.com` SERP query)
-- 4-5 FAQs link to high-DA external sources (from organic SERP results)
-- All URLs come from DataForSEO API results. Never fabricate or guess a URL.
-- Requires DataForSEO credentials: `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` env vars, or provide credentials directly when prompted.
+**Pipeline (4 checkpoints):**
+1. **Pull Data** (parallel: 3 DataForSEO API calls) → **Checkpoint 1:** User reviews raw PAA questions, Telnyx pages, and organic sources. Confirms or adjusts.
+2. **Select Questions** → **Checkpoint 2:** User picks from 4 curated question sets (different mixes of 7-8 from the pool), with previews
+3. **Categorize & Assign Sources** → **Checkpoint 3:** User picks from 4 categorization variants (which FAQs get Telnyx vs external links), with previews
+4. **Write FAQs** → **Checkpoint 4:** User picks from 4 complete FAQ outputs (different writing styles), with previews. Regen available.
 
 **Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`, `constitution/arguments.md`, `constitution/proof-layer.md`
+**Requires:** DataForSEO credentials (`DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD` env vars, or provided when prompted)
 
 ## Positioning Constitution
 
@@ -53,6 +65,6 @@ constitution/
   competitive.md                         # Competitive intelligence
   strategy.md                            # Journeys, SEO, content, regional
 skills/
-  excerpt/SKILL.md                       # Excerpt generator skill
-  faq/SKILL.md                           # FAQ generator skill
+  excerpt/SKILL.md                       # Excerpt generator (2-checkpoint pipeline)
+  faq/SKILL.md                           # FAQ generator (4-checkpoint pipeline)
 ```

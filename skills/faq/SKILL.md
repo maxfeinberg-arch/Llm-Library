@@ -8,31 +8,26 @@ argument-hint: "Target keyword, e.g. voice AI infrastructure, AI call center, ST
 
 Generate publication-ready FAQ sections for the keyword: **$ARGUMENTS**
 
-## Instructions
+This is a pipeline. Execute each step in order. Stop at each checkpoint and wait for the user's selection before proceeding.
 
-You are an FAQ content generator for Telnyx. Your job is to produce 7-8 FAQ question-answer pairs grounded in real Google PAA (People Also Ask) data, vetted high-authority sources, and the Telnyx Narrative Positioning System.
-
-Before generating, read these files for positioning rules:
-
+Before starting, read these files for positioning rules:
 1. `constitution/pillars.md` - The three pillars (Trust, Infrastructure, Physics)
 2. `constitution/language-and-messaging.md` - Language rules, messaging hierarchy, messaging modes
 3. `constitution/arguments.md` - Five canonical arguments (for framing FAQ answers)
 4. `constitution/proof-layer.md` - Proof points (for sourcing claims)
 
-The output must be directly usable in a blog post, landing page, or pillar page. Every answer links to either a Telnyx page or a high-DA external source. No filler. No "read more" appendages.
-
 ---
 
-## Step 1: Pull PAA Data from DataForSEO
+## Step 1: Pull Data (run all 3 API calls in parallel)
 
-Use the DataForSEO SERP API to retrieve People Also Ask questions for "$ARGUMENTS".
+**Authentication:** Basic HTTP Auth. Credentials: `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` env vars. Encode as Base64: `login:password`. If credentials are not available, ask the user to provide them before proceeding.
 
-**API Call:**
+### Call A: PAA + Organic Results
+
 ```
 POST https://api.dataforseo.com/v3/serp/google/organic/live/advanced
 ```
 
-**Request body:**
 ```json
 [
   {
@@ -47,40 +42,16 @@ POST https://api.dataforseo.com/v3/serp/google/organic/live/advanced
 ]
 ```
 
-**Authentication:** Basic HTTP Auth. Credentials are stored in the environment as `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD`. Encode as Base64: `login:password`.
+Extract:
+- All `people_also_ask` items: `title`, `url`, `domain`, `expanded_element`
+- All `organic` items: `domain`, `url`, `title`, `rank_group`
 
-**From the response:** Extract all items where `type` is `"people_also_ask"`. Each PAA item contains:
-- `title` - the question users are asking
-- `url` - the source URL Google is surfacing
-- `domain` - the domain of that source
-- `description` / `expanded_element` - the snippet Google shows
+### Call B: Telnyx Page Discovery
 
-Collect 10-15 PAA questions. You will select 7-8 of the strongest for the final output.
-
----
-
-## Step 2: Pull Organic SERP Results for External Sources
-
-From the same API response, also extract items where `type` is `"organic"`. Collect the top 20 organic results with their:
-- `domain`
-- `url`
-- `title`
-- `rank_group`
-
-These organic results serve as your pool of vetted external sources to link to in FAQ answers. You may ONLY link to external URLs that appear in these results. Do not fabricate or guess URLs.
-
----
-
-## Step 2b: Discover Real Telnyx Pages
-
-Run a second DataForSEO SERP call to find actual Telnyx pages related to the keyword.
-
-**API Call:**
 ```
 POST https://api.dataforseo.com/v3/serp/google/organic/live/advanced
 ```
 
-**Request body:**
 ```json
 [
   {
@@ -94,14 +65,9 @@ POST https://api.dataforseo.com/v3/serp/google/organic/live/advanced
 ]
 ```
 
-From the response, extract all organic results. These are real, indexed Telnyx pages. Collect their:
-- `url` (the actual page URL)
-- `title` (page title)
-- `description` (page description)
+Extract all organic results: `url`, `title`, `description`. This is the Telnyx link pool.
 
-This is your Telnyx link pool. You may ONLY link to Telnyx URLs that appear in these results. Do not fabricate or guess Telnyx URLs. If no relevant Telnyx pages are found for a given FAQ, do not force a Telnyx link. Reclassify that FAQ as external-linked instead.
-
-If the `site:telnyx.com` query returns zero results, run a broader fallback query:
+If zero results, run fallback:
 ```json
 [
   {
@@ -115,116 +81,121 @@ If the `site:telnyx.com` query returns zero results, run a broader fallback quer
 ]
 ```
 
----
+### Call C: Supplementary PAA (if Call A returns fewer than 10 PAA questions)
 
-## Step 3: Vet Sources Using Domain Authority
+Run a second PAA query with a broader keyword variation (e.g., "$ARGUMENTS capabilities", "$ARGUMENTS vs", "$ARGUMENTS use cases") to expand the question pool.
 
-For any external domain you plan to link to, verify it is a high-authority, trustworthy source.
+### Checkpoint 1: Review raw data
 
-**Approved domain categories (always safe to link):**
-- University domains: `.edu` sites (Stanford, MIT, Cornell, Berkeley/cal.edu, CMU, etc.)
-- Major tech companies: openai.com, anthropic.com (claude.ai), google.com, microsoft.com, meta.com, ibm.com, aws.amazon.com
-- Established publications: wired.com, techcrunch.com, theverge.com, arstechnica.com, ieee.org, acm.org
-- Research/standards: arxiv.org, nist.gov, ietf.org, w3.org, gsma.com
-- Industry analysts: gartner.com, forrester.com, mckinsey.com
-- Government/regulatory: fcc.gov, ftc.gov, ec.europa.eu
+After all API calls complete, present the user with a summary:
 
-**Rejected domain patterns (never link to):**
-- Domains with country TLDs unrelated to the content origin (e.g., `.co.uk` for non-UK content)
-- Domains with "technical", "times", "daily", "insider" combined with country names (e.g., indiatechnicaltimesai.co.uk)
-- Content farms, affiliate sites, or low-authority AI news aggregators
-- Any domain you cannot verify as a recognized institution, publication, or company
+- **PAA questions found:** list all questions with their source domains
+- **Telnyx pages found:** list all discovered Telnyx URLs with titles
+- **Organic sources found:** list top domains from organic results
 
-**If uncertain about a domain:** Use the DataForSEO Backlinks Summary API to check domain authority:
+Use `AskUserQuestion` to ask the user to confirm the data looks good:
+- Option 1: "Data looks good, proceed"
+- Option 2: "Run additional keyword variation" (user provides a new keyword to pull more PAA)
+- Option 3: "Remove some questions" (user specifies which to exclude)
+- Option 4: "Start over with different keyword"
 
-```
-POST https://api.dataforseo.com/v3/backlinks/summary/live
-```
-
-```json
-[
-  {
-    "target": "example.com",
-    "include_subdomains": true
-  }
-]
-```
-
-Look at the `rank` field in the response. Use domains with rank 300+ (on the 1000-point scale). Domains below 300 should be replaced with a higher-authority alternative covering the same topic.
+**Do NOT proceed to Step 2 until the user confirms.**
 
 ---
 
-## Step 4: Select and Categorize FAQs
+## Step 2: Select Questions
 
-From the 10-15 PAA questions collected, select 7-8 that meet these criteria:
+From the PAA pool, curate 4 different sets of 7-8 questions. Each set should:
 
 1. **Relevance:** Directly related to "$ARGUMENTS" and its ecosystem
-2. **Search intent clarity:** The question has a clear, answerable intent
+2. **Search intent clarity:** Each question has a clear, answerable intent
 3. **Telnyx alignment:** At least 2-3 questions naturally connect to Telnyx's positioning (trust, infrastructure, physics)
 4. **Diversity:** Mix of definitional ("What is..."), comparative ("How does X compare to..."), practical ("How to..."), and evaluative ("Why does...") questions
 
-**Categorize each selected FAQ:**
+Each of the 4 sets should emphasize a different mix (e.g., more technical, more comparative, more definitional, more production-focused).
 
-- **Telnyx-linked (2-3 FAQs):** Questions where the answer naturally leads to a Telnyx product, capability, or page. The Telnyx link must be earned by the content, not forced.
-- **External-linked (4-5 FAQs):** Questions where the answer benefits from linking to a high-DA external source for deeper context, research, or third-party validation.
+### Checkpoint 2: Choose question set
 
----
+Present the 4 question sets to the user using `AskUserQuestion` with the `preview` field showing the numbered list of questions in each set. The user picks one or selects "Other" to customize (add/remove specific questions).
 
-## Step 5: Apply Positioning Constitution
-
-Every FAQ answer must align with the Telnyx Narrative Positioning System. This does NOT mean every answer pitches Telnyx. It means:
-
-**For Telnyx-linked FAQs:**
-- Map the answer to one of the three pillars: Trust, Infrastructure, or Physics
-- Use the Bottom-Up messaging mode: Problem > Solution > Architecture > Category
-- Link ONLY to a Telnyx URL discovered in Step 2b. Never guess or fabricate a Telnyx URL. Never link to telnyx.com homepage.
-- The Telnyx reference must feel like a natural part of the answer, not an advertisement
-
-**For External-linked FAQs:**
-- Answer the question factually and completely
-- Link ONLY to URLs discovered in Step 2 organic results or PAA expanded elements. Never guess or fabricate an external URL.
-- If the topic tangentially relates to voice AI infrastructure, frame the answer through that lens without forcing it
-- These answers build topical authority and trust - they show the content is informative, not just promotional
-
-**Language rules (apply to ALL answers):**
-- NEVER use: leverage, unlock, empower, best-in-class, cutting-edge, game-changing, synergy, holistic
-- NEVER use em dashes
-- Voice: Infrastructure company voice. We build things, we own things, we run things. Technical precision over marketing polish.
-- Every statistic must have a verifiable source or be marked [INTERNAL ESTIMATE] or [BENCHMARK PENDING]
+**Do NOT proceed to Step 3 until the user selects a question set.**
 
 ---
 
-## Step 6: Write the FAQs
+## Step 3: Categorize & Assign Sources
 
-**Format for each FAQ:**
+Take the selected question set and produce 4 different categorization variants. Each variant assigns:
 
-```
-### Q: [Question from PAA data - use the exact phrasing Google surfaces, or a minor rewrite for clarity]
+- **Telnyx-linked (2-3 FAQs):** Which questions link to a Telnyx page, which pillar they map to, and which specific Telnyx URL from the Step 1 discovery pool
+- **External-linked (4-5 FAQs):** Which questions link to an external source, and which specific URL from the organic results or PAA expanded elements
 
-[Answer: 2-4 sentences. Direct, factual, complete. No fluff. The first sentence answers the question. Remaining sentences add necessary context or nuance.]
+Each variant should differ in which questions get Telnyx links vs external links, and which specific source URLs are assigned.
 
-[Inline link to source - woven naturally into the answer text, not appended.]
-```
+**Source vetting rules:**
 
-**Critical rules:**
+Approved domains (always safe): `.edu` sites, openai.com, anthropic.com, google.com, microsoft.com, meta.com, ibm.com, aws.amazon.com, wired.com, techcrunch.com, theverge.com, arstechnica.com, ieee.org, acm.org, arxiv.org, nist.gov, ietf.org, w3.org, gsma.com, gartner.com, forrester.com, mckinsey.com, fcc.gov, ftc.gov, ec.europa.eu, forbes.com
 
-1. **No "read more" appendages.** Never end an answer with "For more information, read [article]" or "Learn more about this at [link]" or "Check out [resource] for details." The link must be woven into the answer itself as a natural citation or reference.
+Rejected patterns: country TLDs unrelated to content origin, "technical/times/daily/insider" + country names, content farms, affiliate sites, low-authority AI news aggregators.
 
-   BAD: "STIR/SHAKEN is a caller ID authentication framework. For more info, read this article on Voice AI."
+If uncertain about a domain, check via DataForSEO Backlinks Summary API (`POST https://api.dataforseo.com/v3/backlinks/summary/live`). Use domains with `rank` 300+ only.
 
+**Critical:** All URLs must come from the DataForSEO API results. Telnyx URLs from Call B. External URLs from Call A organic results or PAA expanded elements. Never fabricate or guess a URL.
+
+### Checkpoint 3: Choose categorization
+
+Present the 4 categorization variants to the user using `AskUserQuestion` with the `preview` field showing a table: question | source type | link URL | pillar (if Telnyx). The user picks one or selects "Other" to adjust assignments.
+
+**Do NOT proceed to Step 4 until the user selects a categorization.**
+
+---
+
+## Step 4: Write FAQs
+
+Using the selected questions, categorization, and source assignments, generate 4 complete FAQ outputs. Each output contains all 7-8 Q&A pairs but with different writing approaches:
+
+- **Variant A:** Technical/developer voice, bottom-up framing
+- **Variant B:** Concise/direct, minimal context
+- **Variant C:** Explanatory, more context per answer
+- **Variant D:** Mixed, technical for Telnyx-linked and accessible for external-linked
+
+**Rules for all variants:**
+
+1. **No "read more" appendages.** Never end with "For more information..." or "Learn more at..." The link must be woven into the answer as a natural citation.
+
+   BAD: "STIR/SHAKEN is a framework. For more info, read this article on Voice AI."
    GOOD: "STIR/SHAKEN is a caller ID authentication framework [mandated by the FCC in 2021](https://www.fcc.gov/stir-shaken) to combat robocall spoofing."
 
-2. **No fabricated links.** Every URL (Telnyx or external) must come from the DataForSEO API results. Telnyx URLs come from Step 2b. External URLs come from Step 2 organic results or PAA expanded elements. Never guess, fabricate, or construct a URL. Never link to telnyx.com homepage.
+2. **No fabricated links.** Every URL must come from the DataForSEO API results. Never guess or construct a URL.
 
-3. **Answers must stand alone.** Each answer should fully satisfy the searcher's intent without requiring them to click through. The link adds depth, not the core answer.
+3. **Answers stand alone.** Each answer fully satisfies the searcher's intent. The link adds depth, not the core answer.
 
-4. **Match PAA phrasing.** Use the exact question phrasing from Google's PAA when possible. These are the queries real users are asking. Minor rewrites for grammar are acceptable.
+4. **Match PAA phrasing.** Use the exact question phrasing from Google's PAA. Minor grammar rewrites only.
+
+5. **Maximum 4 sentences per answer.**
+
+6. **Language rules:** Never use banned words (leverage, unlock, empower, best-in-class, cutting-edge, game-changing, synergy, holistic). Never use em dashes. Infrastructure company voice. Every statistic must have a verifiable source or be marked [INTERNAL ESTIMATE] or [BENCHMARK PENDING].
+
+**For Telnyx-linked FAQs:**
+- Map to one of the three pillars: Trust, Infrastructure, or Physics
+- Use Bottom-Up messaging: Problem > Solution > Architecture > Category
+- Link ONLY to a Telnyx URL from Step 1 Call B results
+
+**For External-linked FAQs:**
+- Answer factually and completely
+- Link ONLY to URLs from Step 1 Call A results
+- Frame through voice AI infrastructure lens without forcing it
+
+### Checkpoint 4: Choose final output
+
+Present the 4 FAQ variants to the user using `AskUserQuestion` with the `preview` field showing the first 2-3 Q&A pairs of each variant (enough to show the tone/style). The user picks one or selects "Other" to request regeneration with specific feedback.
+
+**If the user requests regeneration:** Generate 4 new variants incorporating their feedback. Repeat this checkpoint until the user selects one.
 
 ---
 
-## Step 7: Generate the Output
+## Output
 
-Produce the final output in this structure:
+Once the user selects a variant, output the final FAQ in this format:
 
 ```markdown
 ## Frequently Asked Questions: [Topic derived from $ARGUMENTS]
@@ -233,23 +204,23 @@ Produce the final output in this structure:
 
 ---
 
-### Q: [PAA Question 1]
+### Q: [Question]
 
-[Answer with inline Telnyx link]
+[Answer with inline link]
 
-**Source type:** Telnyx | **Pillar:** [Trust/Infrastructure/Physics] | **Page:** [URL linked]
-
----
-
-### Q: [PAA Question 2]
-
-[Answer with inline external link]
-
-**Source type:** External | **Domain authority:** [rank from DataForSEO or "Pre-approved"] | **Source:** [URL linked]
+**Source type:** Telnyx | **Pillar:** [Trust/Infrastructure/Physics] | **Page:** [URL]
 
 ---
 
-[... repeat for all 7-8 FAQs ...]
+### Q: [Question]
+
+[Answer with inline link]
+
+**Source type:** External | **Domain authority:** [rank or "Pre-approved"] | **Source:** [URL]
+
+---
+
+[... all 7-8 FAQs ...]
 
 ---
 
@@ -258,24 +229,9 @@ Produce the final output in this structure:
 | # | Question | Source Type | Link Domain | DA/Rank |
 |---|----------|-------------|-------------|---------|
 | 1 | [question] | Telnyx | telnyx.com/... | N/A |
-| 2 | [question] | External | ibm.com/... | 850+ |
-| ... | ... | ... | ... | ... |
+| 2 | [question] | External | domain.com/... | 850+ |
 
 **Distribution:** [X] Telnyx-linked | [Y] External-linked
-**Positioning pillars used:** [list pillars referenced]
-**PAA questions available but not used:** [list 2-3 unused PAA questions for future content]
+**Positioning pillars used:** [list]
+**PAA questions available but not used:** [list 2-3 for future content]
 ```
-
----
-
-## Constraints
-
-- Exactly 2-3 FAQ answers must link to a Telnyx page
-- Exactly 4-5 FAQ answers must link to an external high-DA source
-- Zero answers may end with a "read more" or "learn more" appendage
-- Every external source must pass the vetting criteria in Step 3
-- Every Telnyx-linked answer must map to a positioning pillar
-- Maximum 4 sentences per answer
-- All PAA data must come from the DataForSEO API call, not from fabricated questions
-- All URLs (Telnyx and external) must come from DataForSEO API results. Zero fabricated links.
-- If the DataForSEO API returns fewer than 7 usable PAA questions, supplement with related questions from the `related_searches` SERP item type, clearly marked as "[Related Search]" in the metadata

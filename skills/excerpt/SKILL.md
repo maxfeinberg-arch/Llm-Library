@@ -8,6 +8,10 @@ argument-hint: "AI Model name, e.g. GPT-4o, Claude, Whisper, Llama 3, Gemini"
 
 Generate a one-line positioning excerpt for the AI model: **$ARGUMENTS**
 
+This is a pipeline. Execute each step in order. Stop at each checkpoint and wait for the user's selection before proceeding.
+
+---
+
 ## Search Intent: Informational
 
 The page this excerpt lives on targets an informational keyword. The user is searching for "$ARGUMENTS" to learn what it is, how it works, or what it does. They are NOT looking to buy, compare pricing, or sign up for anything.
@@ -30,75 +34,77 @@ An excerpt is a single sentence of positioning copy that appears directly beneat
 
 The excerpt is ONE sentence. Not a paragraph. Not a structured document. One line.
 
-## Instructions
+---
 
-You are a positioning content generator for Telnyx, grounded in the Telnyx Narrative Positioning System. Before generating, read these two files for positioning rules:
+## Step 1: Research & Classify
 
-1. `constitution/pillars.md` - The three pillars (Trust, Infrastructure, Physics)
-2. `constitution/language-and-messaging.md` - Language rules, messaging hierarchy, messaging modes
+**Actions (run in parallel):**
+1. Read `constitution/pillars.md` and `constitution/language-and-messaging.md`
+2. Research "$ARGUMENTS" using web search to understand what this model is, its capabilities, and its category
 
-### Step 1: Classify the Model
+**Then classify** the model into one of these types:
+- **LLM** - The reasoning layer. Needs telephony, STT, and TTS around it to become a voice agent.
+- **STT/ASR** - The transcription layer. One component in a pipeline that still needs telephony, LLM, and TTS.
+- **TTS** - The voice synthesis layer. One component that still needs telephony, STT, and LLM.
+- **Multimodal/Voice-native** - Models with native audio I/O. Still need PSTN connectivity, carrier identity, and telecom infrastructure.
+- **Open-source/Self-hosted** - Models you can run yourself. Still need carrier infrastructure to connect to the telephone network.
 
-Determine what type of AI model "$ARGUMENTS" is:
+### Checkpoint 1: Choose the positioning angle
 
-- **LLM** (GPT-4o, Claude, Llama, Gemini, Mistral, Command R, etc.) - The reasoning layer. Needs telephony, STT, and TTS around it to become a voice agent.
-- **STT/ASR** (Whisper, Deepgram Nova, AssemblyAI, Google Speech-to-Text, etc.) - The transcription layer. One component in a pipeline that still needs telephony, LLM, and TTS.
-- **TTS** (ElevenLabs, PlayHT, XTTS, Bark, Amazon Polly, etc.) - The voice synthesis layer. One component that still needs telephony, STT, and LLM.
-- **Multimodal/Voice-native** (GPT-4o Realtime, Gemini Live, etc.) - Models with native audio I/O. Still need PSTN connectivity, carrier identity, and telecom infrastructure to reach real phone numbers.
-- **Open-source/Self-hosted** (Llama, Whisper, XTTS, etc.) - Models you can run yourself. Still need carrier infrastructure to connect to the telephone network.
+After classifying the model, present the user with 4 options using `AskUserQuestion`. Each option is a different positioning angle combining model type + pillar + framing direction. Use the `preview` field to show a one-line preview of what the excerpt would sound like for each angle.
 
-### Step 2: Write the Excerpt
+**Example options (adapt to the specific model):**
+- Option 1: Infrastructure pillar, co-location framing
+- Option 2: Trust pillar, identity/attestation framing
+- Option 3: Physics pillar, latency/network framing
+- Option 4: Infrastructure pillar, single-stack framing
 
-Write ONE sentence that:
+The user can also select "Other" to describe a custom angle.
 
-1. Describes what the model is and what it does well (informational, not promotional)
-2. Connects it to Telnyx Voice AI Infrastructure (the gap Telnyx fills)
-3. Implies production readiness through specifics, not sales language
+**If the user requests regeneration:** Generate 4 new angles that are meaningfully different from the first set.
 
-**Framing by model type:**
+**Do NOT proceed to Step 2 until the user selects an angle.**
 
-- **LLMs:** Position Telnyx as the infrastructure that turns reasoning into production voice agents. The model thinks. Telnyx makes the call.
-- **STT models:** Position Telnyx as the carrier network where audio originates. The model transcribes. Telnyx owns the network the audio travels on.
-- **TTS models:** Position Telnyx as the PSTN connectivity that turns synthesized speech into real phone calls. The model speaks. Telnyx delivers the voice.
-- **Multimodal models:** Position Telnyx as the carrier infrastructure for production telephony. The model handles the conversation. Telnyx handles the call.
-- **Open-source models:** Position Telnyx as the licensed carrier layer developers cannot self-host. You run the model. Telnyx runs the network.
+---
 
-### Step 3: Apply the Positioning Constitution
+## Step 2: Generate Excerpts
 
-The excerpt MUST follow these rules verbatim from the constitution:
+Using the angle the user selected in Step 1, generate 4 distinct excerpt sentences. Each must:
 
-**Three Pillars (the excerpt should map to one):**
-- **Trust**: Carrier-level identity, STIR/SHAKEN A-level attestation, AI voice detection, number reputation.
-- **Infrastructure**: Owned carrier network, co-located inference, single operational domain, telecom licenses in 40+ countries.
-- **Physics**: Zero inter-provider hops, co-located STT/LLM/TTS with telephony termination.
+1. Describe what the model is and what it does well (informational, not promotional)
+2. Connect it to Telnyx Voice AI Infrastructure through the chosen angle
+3. Imply production readiness through specifics, not sales language
 
-**Language Rules:**
+**Framing reference by model type:**
+- **LLMs:** The model thinks. Telnyx makes the call.
+- **STT models:** The model transcribes. Telnyx owns the network the audio travels on.
+- **TTS models:** The model speaks. Telnyx delivers the voice.
+- **Multimodal models:** The model handles the conversation. Telnyx handles the call.
+- **Open-source models:** You run the model. Telnyx runs the network.
+
+**Language rules (from constitution):**
 - NEVER use: leverage, unlock, empower, best-in-class, cutting-edge, game-changing, synergy, holistic
 - NEVER use em dashes
 - NEVER lead with: CPaaS, Telecom APIs, Developer communications tools
 - ALWAYS lead with or reference: Voice AI Infrastructure, AI communications infrastructure, AI agents interacting with humans, Trust infrastructure for voice AI
 - Voice: Infrastructure company voice. We build things, we own things, we run things. Technical precision over marketing polish.
 
-### Step 4: Output
-
-Output ONLY the single excerpt sentence. Nothing else. No metadata, no headers, no pillar labels, no structured sections.
-
-**Good outputs (informational, descriptive, positioned):**
-- "A 400K-context reasoning model for voice AI agents, running on Telnyx carrier infrastructure with co-located inference and zero inter-provider hops."
-- "OpenAI's frontier LLM for agentic tool use, available on Telnyx Voice AI Infrastructure with carrier-grade telephony and co-located speech processing."
-- "A real-time transcription model that runs co-located with Telnyx telephony termination, eliminating the network hop between audio ingress and speech recognition."
-
-**Bad outputs:**
-- "Unlock the potential of $ARGUMENTS for dynamic, real-time AI that sets industry standards." (banned word "unlock", no informational value, reads like ad copy)
-- "Build trusted voice AI agents with $ARGUMENTS today." (transactional CTA, not informational)
-- "Start building with $ARGUMENTS on Telnyx." (sales pitch, not a description)
-- Any output with ## headers, **bold labels**, bullet points, or multiple paragraphs
-
-### Constraints
-
+**Constraints per excerpt:**
 - ONE sentence only
 - Maximum 30 words
 - Must reference Telnyx infrastructure, not just the model
-- Must not diminish the model. Position Telnyx as the infrastructure that makes it work in production.
-- The model is the customer's choice. Telnyx is the infrastructure that makes any choice work.
+- Must not diminish the model
 - Every claim must be supportable by the positioning constitution
+- Informational tone, not transactional
+
+### Checkpoint 2: Choose the excerpt
+
+Present the 4 excerpts to the user using `AskUserQuestion` with the `preview` field showing each full sentence. The user picks one or selects "Other" to request regeneration with specific feedback.
+
+**If the user requests regeneration:** Generate 4 new excerpts incorporating their feedback. Repeat this checkpoint until the user selects one.
+
+---
+
+## Output
+
+Once the user selects an excerpt, output ONLY the final sentence. Nothing else. No metadata, no headers, no commentary. Just the one line of copy.
