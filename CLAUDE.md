@@ -13,11 +13,11 @@ Steps within a stage run in parallel when they are independent (e.g., multiple A
 ### `/excerpt <model name>`
 Generates a single-sentence positioning excerpt for an AI model page on telnyx.com. Informational intent, not transactional. One sentence, max 30 words.
 
-**Pipeline (2 checkpoints):**
-1. **Research & Classify** (parallel: read constitution files + web search model) → **Checkpoint 1:** User picks from 4 positioning angles (pillar + framing direction), with previews
-2. **Generate Excerpts** → **Checkpoint 2:** User picks from 4 excerpt sentences, with previews. Regen available.
+**Pipeline (1 checkpoint):**
+1. **Research** (parallel: read constitution language file + web search model)
+2. **Generate Excerpts** → **Checkpoint:** User picks from 4 excerpt sentences (each with a different angle), with previews. Regen available.
 
-**Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`
+**Reads:** `constitution/language-and-messaging.md`
 
 ### `/faq <keyword>`
 Generates 7-8 SEO-optimized FAQ sections using live Google PAA data from the DataForSEO API.
