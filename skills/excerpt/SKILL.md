@@ -19,7 +19,7 @@ The page this excerpt lives on targets an informational keyword. The user is sea
 The excerpt must be purely informational. It should describe what the model is and what it does well. It should NOT read like a sales pitch, a CTA, or a product page headline. No commercial framing at all.
 
 **Informational tone:** "Here is what this model is and what it's good at."
-**NOT commercial tone:** "Start building with this model today." / "Run this model on Telnyx infrastructure."
+**NOT commercial tone:** "Start building with this model today." / "Run this model on Telnyx infrastructure." / "Built for voice agents on carrier networks."
 
 ## What is an excerpt?
 
@@ -29,7 +29,7 @@ An excerpt is a single sentence that appears directly beneath the model name (H1
 ```
 [H1] Claude Opus 4.6
 [Excerpt] Anthropic's most capable model to date, built for complex reasoning, coding, and agentic workflows.
-[CTA buttons] START BUILDING | GET AVAILABLE MODELS
+[CTA buttons] EXPLORE MODEL | VIEW DOCUMENTATION
 ```
 
 **Reference examples (match this tone):**
@@ -43,41 +43,17 @@ The excerpt is ONE sentence. Not a paragraph. Not a structured document. One lin
 
 ---
 
-## Step 1: Research & Classify
+## Step 1: Research
 
 **Actions (run in parallel):**
 1. Read `constitution/language-and-messaging.md` (for banned words and voice guidelines only)
 2. Research "$ARGUMENTS" using web search to understand what this model is, its capabilities, its strengths, and its intended use cases
 
-**Then classify** the model into one of these types:
-- **LLM** - Language model for reasoning, generation, coding, or conversation
-- **STT/ASR** - Speech-to-text or automatic speech recognition model
-- **TTS** - Text-to-speech or voice synthesis model
-- **Multimodal/Voice-native** - Models with native audio I/O or multiple modalities
-- **Open-source/Self-hosted** - Models available to run on your own infrastructure
-- **Embedding/Utility** - Embedding models, rerankers, or other utility models
-
-### Checkpoint 1: Choose the framing angle
-
-After classifying the model, present the user with 4 options using `AskUserQuestion`. Each option is a different way to describe the model's core value. Use the `preview` field to show a one-line preview of what the excerpt would sound like for each angle.
-
-Focus angles on the MODEL, not on Telnyx. Different angles might emphasize:
-- The model's primary strength (reasoning, speed, accuracy, etc.)
-- The model's target use case (coding, enterprise, conversational, etc.)
-- The model's differentiator vs. its category (what makes it stand out)
-- The model's design philosophy (efficiency, capability, reliability, etc.)
-
-The user can also select "Other" to describe a custom angle.
-
-**If the user requests regeneration:** Generate 4 new angles that are meaningfully different from the first set.
-
-**Do NOT proceed to Step 2 until the user selects an angle.**
-
 ---
 
 ## Step 2: Generate Excerpts
 
-Using the angle the user selected in Step 1, generate 4 distinct excerpt sentences. Each must:
+Using the research from Step 1, generate 4 distinct excerpt sentences. Each should take a different angle on the model (e.g., primary strength, target use case, differentiator, design philosophy). Each must:
 
 1. Describe what the model is and what it does well
 2. Be informational and factual, not promotional or commercial
@@ -93,6 +69,7 @@ Using the angle the user selected in Step 1, generate 4 distinct excerpt sentenc
 - Mention Telnyx infrastructure, co-location, or carrier networks
 - Sound like ad copy, a sales pitch, or a product landing page
 - Use vague superlatives or marketing fluff
+- Frame the model through any specific industry lens (telco, carrier, infrastructure, voice AI)
 
 **Language rules (from constitution):**
 - NEVER use: leverage, unlock, empower, best-in-class, cutting-edge, game-changing, synergy, holistic
@@ -105,15 +82,18 @@ Using the angle the user selected in Step 1, generate 4 distinct excerpt sentenc
 - Must not diminish the model
 - Informational tone, not transactional or commercial
 - Should read like the reference examples above
+- Must be useful to any reader regardless of industry
 
 ### Checkpoint 2: Choose the excerpt
 
-Present the 4 excerpts to the user using `AskUserQuestion` with the `preview` field showing each full sentence. The user picks one or selects "Other" to request regeneration with specific feedback.
+Present the 4 excerpts to the user using `AskUserQuestion`. Put the full excerpt sentence in the `description` field so the user can read all 4 without clicking into each one. Use a short label like "Excerpt 1", "Excerpt 2", etc. Do NOT use the `preview` field. The user picks one or selects "Other" to request regeneration with specific feedback.
 
 **If the user requests regeneration:** Generate 4 new excerpts incorporating their feedback. Repeat this checkpoint until the user selects one.
 
 ---
 
 ## Output
+
+**The excerpt describes the model. It does not describe the platform it's hosted on.**
 
 Once the user selects an excerpt, output ONLY the final sentence. Nothing else. No metadata, no headers, no commentary. Just the one line of copy.
