@@ -4,7 +4,7 @@ This repo contains Claude Code skills for generating Telnyx Voice AI Infrastruct
 
 ## How Skills Work: Pipeline, Not Agentic
 
-Both skills run as **sequential pipelines with human-in-the-loop checkpoints**. At each checkpoint, the user is presented with 4 options (via `AskUserQuestion` with preview fields) and can select one or choose "Other" to request regeneration with feedback. The skill does NOT proceed to the next step until the user makes a selection.
+All skills run as **sequential pipelines with human-in-the-loop checkpoints**. At each checkpoint, the user is presented with 4 options (via `AskUserQuestion` with preview fields) and can select one or choose "Other" to request regeneration with feedback. The skill does NOT proceed to the next step until the user makes a selection.
 
 Steps within a stage run in parallel when they are independent (e.g., multiple API calls). Steps across stages run sequentially because each depends on the user's choice from the previous checkpoint.
 
@@ -31,14 +31,24 @@ Generates 7-8 SEO-optimized FAQ sections using live Google PAA data from the Dat
 **Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`, `constitution/arguments.md`, `constitution/proof-layer.md`
 **Requires:** DataForSEO credentials (`DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD` env vars, or provided when prompted)
 
+### `/about <model name>`
+Generates a 250-300 word "About" section for an AI model page on telnyx.com. Multi-paragraph, informational, with two verified hyperlinks (one external article, one Telnyx /developers/docs, /resources, /products, or /solutions URL). All links are verified to return HTTP 200 before the user reviews.
+
+**Pipeline (2 checkpoints):**
+1. **Research** (parallel: read constitution files + web search model + 2 DataForSEO calls for external articles and Telnyx pages) → **Checkpoint 1:** User reviews discovered external articles and Telnyx pages. Confirms or adjusts.
+2. **Verify Links** (fetch candidate URLs, confirm HTTP 200) → **Generate About Sections** → **Checkpoint 2:** User picks from 4 about section variants (different angles: architecture, capabilities, evolution, balanced), with previews. Regen available.
+
+**Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`
+**Requires:** DataForSEO credentials (`DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD` env vars, or provided when prompted)
+
 ## Positioning Constitution
 
 The constitution is split into focused files so skills only ingest what they need. Each file is verbatim from the source document. Do not summarize, paraphrase, or hallucinate positioning claims.
 
 | File | Contents | Used by |
 |------|----------|---------|
-| `constitution/pillars.md` | Three Pillars: Trust, Infrastructure, Physics | excerpt, faq |
-| `constitution/language-and-messaging.md` | Language rules, messaging hierarchy, two messaging modes | excerpt, faq |
+| `constitution/pillars.md` | Three Pillars: Trust, Infrastructure, Physics | excerpt, faq, about |
+| `constitution/language-and-messaging.md` | Language rules, messaging hierarchy, two messaging modes | excerpt, faq, about |
 | `constitution/arguments.md` | Five canonical arguments with evidence and rebuttals | faq |
 | `constitution/proof-layer.md` | Proof points table (claims only Telnyx can make) | faq |
 | `constitution/frankenstack.md` | The Frankenstack problem definition | reference |
@@ -65,6 +75,7 @@ constitution/
   competitive.md                         # Competitive intelligence
   strategy.md                            # Journeys, SEO, content, regional
 skills/
+  about/SKILL.md                         # About section generator (2-checkpoint pipeline)
   excerpt/SKILL.md                       # Excerpt generator (2-checkpoint pipeline)
   faq/SKILL.md                           # FAQ generator (4-checkpoint pipeline)
 ```
