@@ -32,12 +32,13 @@ Generates 7-8 SEO-optimized FAQ sections using live Google PAA data from the Dat
 **Requires:** DataForSEO credentials (`DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD` env vars, or provided when prompted)
 
 ### `/about <model name>`
-Generates a 350-400 character "About" paragraph for an AI model page on telnyx.com. Single paragraph, no links, no line breaks. Informational only, does not mention Telnyx.
+Generates a 350-400 character "About" paragraph for an AI model page on telnyx.com. Single paragraph, one external hyperlink, no Telnyx mention. Does not mention Telnyx.
 
 **Pipeline (1 checkpoint):**
-1. **Research** (parallel: read constitution files + web search model) → **Ask for Excerpt** (user provides the current one-sentence excerpt so the about paragraph doesn't repeat it) → **Generate About Paragraphs** → **Checkpoint:** User picks from 4 variants (different angles: architecture, capabilities, evolution, balanced), with previews. Regen available.
+1. **Research** (parallel: read constitution files + web search model + DataForSEO organic search for external article) → **Verify External Link** (confirm HTTP 200) → **Ask for Excerpt** (user provides the current one-sentence excerpt so the about paragraph doesn't repeat it) → **Generate About Paragraphs** → **Checkpoint:** User picks from 4 variants (different angles: architecture, capabilities, evolution, balanced), with previews. Regen available.
 
 **Reads:** `constitution/pillars.md`, `constitution/language-and-messaging.md`
+**Requires:** DataForSEO credentials (`DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD` env vars, or provided when prompted)
 
 ## Positioning Constitution
 
